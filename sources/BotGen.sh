@@ -1,24 +1,24 @@
 #!/bin/bash
 declare -A dir=( [exec]="." [main]="base" [data]="data" [server]="server" [tmp]="tmp" [script]="server/downScript" [backup]="$HOME/.user-backup" )
 declare -A file=( [uid]="${dir[data]}/User-ID" [confJSON]="${dir[data]}/conf.json" [tmpJSON]="${dir[tmp]}/tmp.json" [kid]="${dir[server]}/Key-ID" [ShellBot]="${dir[main]}/ShellBot.sh" [confbot]="${dir[main]}/confbot.sh" [botScript]="${dir[main]}/botScript.sh" )
-declare -A url=( [drowkid]="https://raw.githubusercontent.com/vpsnetdk/tg-files/main/sources" [exec]="https://raw.githubusercontent.com/vpsnetdk/exec/main" )
+url="https://raw.githubusercontent.com/vpsnetdk/tg-files/main/sources"
 		[[ ! -d ${dir[@]} ]] && mkdir -p ${dir[@]} &> /dev/null
-[[ ! -e "${dir[data]}/conf.json" ]] && { read -p "id: " id;read -p "token: " token;read -p "user: " admin;jq --arg a "${token}" --arg b "${id}" --arg c "${admin}" '{token: $a, users: {admin: {id: $b, username: $c }}}' -n > ${file[confJSON]} ; }
+[[ ! -e "${dir[data]}/conf.json" ]] && { read -p "id: " id;read -p "token: " token;read -p "user: " admin;jq --arg a "${token}" --arg b "${id}" --arg c "${admin}" '{token: $a, users: {admin: {id: $b, username: $c }}}' -n > ${dir[data]}/conf.json ; }
 			[[ ! -e ${file[@]} ]] && {
 				for arqx in $(echo "User-ID confJSON tmpJSON kid") ; do
 					touch ${file[$arqx]} &> /dev/null
 				done
-			} || {
 
-				for arqx in $(echo "ShellBot confbot botScript") ; do
-					wget -O ${file[$arqx]} ${url[drowkid]}/$arqx &> /dev/null
-					chmod +x ${file[$arqx]}
+				for arqxbt in $(echo "ShellBot confbot botScript") ; do
+					wget -O ${file[$arqxbt]} $url/${arqxbt}.sh &> /dev/null  #https://raw.githubusercontent.com/vpsnetdk/tg-files/main/sources/$arqx &> /dev/null
+					chmod +x ${file[$arqxbt]}
 				done
+			bash $(pwd)/$0
 			}
 LINE="━━━━━━━━━━━━━━━"
 
-source ${dir[exec]}/ShellBot.sh
-source ${dir[exec]}/botScript.sh
+source ${dir[main]}/ShellBot.sh
+source ${dir[main]}/botScript.sh
 
 #ID del administrador del bot
 admin_id="$(jq -r .users.admin.id < ${file[confJSON]})"
