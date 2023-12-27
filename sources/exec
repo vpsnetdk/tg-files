@@ -1,0 +1,112 @@
+#!/bin/bash
+# funciones @drowkid01
+function exec_main(){ jq '{exec: {main: {funciones: [{colores: {r: "[1;31m", N: "[1;30m", a: "[1;33m", az: "[1;34m", c: "[1;36m", m: "[1;35m", v: "[1;32m" }, textos: {host: "Ingrese su host:", geoip: "Ingrese su IP:", geod: "Ingrese su dominio:", dns: "Ingrese el host que desea analizar:" }}]}}}' -n | jq -r ".exec.main.funciones[0].$1" ; }
+
+function txt(){ [[ $1 = "-bar" ]] && echo -e "\e[1;30m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+ [[ $1 = @("-ne"|"-e") ]] && { if [[ $1 == "-e" ]]; then echo -e "$2 $3" ; elif [[ $1 == "-ne" ]]; then echo -ne " \e[1;30m[\e[1;36m•\e[1;30m] \e[1;36m$2 \e[1;32m" && read $3 ; fi ; }
+ [[ $1 = @("-N"|"-r"|"-c"|"-a"|"-az"|"-m"|"-v") ]] && {
+ comand="$(echo $1|cut -d'-' -f2)"
+ color="\e" && color+="$(exec_main "colores.$comand")"
+ echo -e "${color}$2"
+ }
+}
+function titulo(){
+ banner="		[0;1;34;94m┏━┓┏━┓╺┳╸┏━┓┏┓[0m [0;1;34;94m┏[0;34m━┓╺┳╸[0m\n		[0;1;34;94m┣━┛┣━┫[0m [0;1;34;94m┃[0m [0;34m┃[0m [0;34m┃┣┻┓┃[0m [0;34m┃[0m [0;34m┃[0m \n		[0;34m╹[0m  [0;34m╹[0m [0;34m╹[0m [0;34m╹[0m [0;34m┗━┛┗━┛┗[0;37m━┛[0m [0;37m╹[0m "
+ clear;txt -bar;cat <(echo -e "${banner}");txt -bar
+}
+function checkdir(){
+dir=$1;[[ ! -d ${dir} ]] && mkdir ${dir} -p &> /dev/null
+}
+
+function downs(){
+ case $1 in
+ "-s")wget -q -O $2 $3 &> /dev/null && chmod 775 $2 ;;
+ "-t")wget -q -O $2 $3 &> /dev/null && tar xpf $2 --directory $4 && rm $2;;
+ "-z")wget -q -O $2 $3 &> /dev/null && unzip $2 -d $4 && rm $2 ;;
+ esac
+}
+
+declare -A color=( [0]="\e[1;30m" [1]="\e[1;31m" [2]="\e[1;32m" [3]="\e[1;33m" [4]="\e[1;34m" [5]="\e[1;35m" [6]="\e[1;36m" [7]="\e[1;37m" )
+function_menu(){
+  local options=${#@}
+  local array
+  for((num=1; num<=$options; num++)); do
+    echo -ne "  \e[1;30m[\e[1;36m$num\e[1;30m]\e[1;33m ➤➤➤ \e[1;97m"
+    array=(${!num})
+    case ${array[0]} in
+    *)echo -e "\033[1;37m${array[@]}";;
+    esac
+  done
+ }
+function selectfw(){
+local selection="null" && local range
+for((i=0; i<=$1; i++)); do range[$i]="$i "; done 
+  while [[ ! $(echo ${range[*]}|grep -w "$selection") ]]; do
+echo -ne "\033[1;30m ╰► Seleccione su opción: " >&2
+read selection
+tput cuu1 >&2 && tput dl1 >&2
+done
+echo $selection
+}
+
+function txtct(){
+    if [[ -z $2 ]]; then
+        text="$1"
+    else
+        col="$1"
+        text="$2"
+    fi
+
+    while read line; do
+        unset space
+        x=$(((54 - ${#line}) / 2))
+        for ((i = 0; i < $x; i++)); do
+            space+=' '
+        done
+        space+="$line"
+        if [[ -z $2 ]]; then
+            echo -e "\e[1;36m$space"
+        else
+            echo -e "$col" "$space"
+        fi
+    done <<<$(echo -e "$text")
+}
+function instalar(){
+	utx(){
+	_=$(
+	        $1 >/dev/null 2>&1
+	    ) &
+	    >/dev/null
+	    pid=$!
+	    while [[ -d /proc/$pid ]]; do
+	        echo -ne "  \033[1;30m[\e[1;36m$2 \e[1;32m$3\e[1;30m] \e[1;30m["
+	        for ((i = 0; i < 20; i++)); do
+	            echo -ne "\033[1;31m>"
+	            sleep 0.08
+	        done
+	        echo -ne "\033[1;30m]"
+	        sleep 0.5s
+	        echo
+	        tput cuu1 && tput dl1
+	    done
+	    [[ $4 = "repo" ]] && { [[ $(dpkg --get-selections | grep -w "$paquete" | head -1) ]] || ESTATUS=$(echo -e "\033[91m  FALLO DE INSTALACION") &>/dev/null                                                                [[ $(dpkg --get-selections | grep -w "$paquete" | head -1) ]] && ESTATUS=$(echo -e "\033[1;33m       \033[92mINSTALADO") &>/dev/null ; }
+	    echo -ne "  \e[1;32m[✓] $4 [✓] \033[0m\n"
+	    sleep 0.5s
+	}
+[[ $1 = "-f" ]] && utx "wget -O $2 $3 &> /dev/null" "file:" "$(echo $2|cut -d'/' -f2)" "\e[1;30m[\e[1;33m$(echo $2|cut -d'/' -f2)\e[1;30m]\e[1;32m descargado exitosamente"
+[[ $1 = "-r" ]] && utx "apt-get install $2 -y &> /dev/null" "recurso:" "$2" "\e[1;30m[\e[1;33m$2\e[1;30m]\e[1;32m instalado exitosamente"
+}
+export _hora=$(printf '%(%H:%M:%S)T')
+export _fecha=$(printf '%(%D)T')
+export numero='^[0-9]+$'
+export texto='^[A-Za-z]+$'
+export txt_num='^[A-Za-z0-9]+$'
+export -f checkdir
+export -f downs
+export -f function_menu
+export -f selectfw
+export -f txt
+export -f txtct
+export -f exec_main
+export -f instalar
+
