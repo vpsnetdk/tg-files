@@ -1,19 +1,21 @@
 #!/bin/bash
 declare -A dir=( [exec]="." [main]="base" [data]="data" [server]="server" [tmp]="tmp" [script]="server/downScript" [backup]="$HOME/.user-backup" )
-declare -A file=( [uid]="${dir[data]}/User-ID" [confJSON]="${dir[data]}/conf.json" [tmpJSON]="${dir[tmp]}/tmp.json" [kid]="${dir[server]}/Key-ID" [ShellBot]="${dir[main]}/ShellBot.sh" [confbot]="${dir[main]}/confbot.sh" [botScript]="${dir[main]}/botScript.sh" )
+declare -A file=( [uid]="${dir[data]}/User-ID" [confJSON]="${dir[data]}/conf.json" [tmpJSON]="${dir[tmp]}/tmp.json" [kid]="${dir[server]}/Key-ID" [ShellBot]="${dir[main]}/ShellBot.sh" [confbot]="${dir[main]}/confbot.sh" [botScript]="${dir[main]}/botScript.sh" [fx]="-" [exec]="${dir[main]}/exec" )
 url="https://raw.githubusercontent.com/vpsnetdk/tg-files/main/sources"
+[[ -e ${file[fx]} ]] && rm ${file[fx]}
 		[[ ! -d ${dir[@]} ]] && mkdir -p ${dir[@]} &> /dev/null
-[[ ! -e "${dir[data]}/conf.json" ]] && { read -p "id: " id;read -p "token: " token;read -p "user: " admin;jq --arg a "${token}" --arg b "${id}" --arg c "${admin}" '{token: $a, users: {admin: {id: $b, username: $c }}}' -n > ${dir[data]}/conf.json ; }
+[[ ! -e "${dir[data]}/conf.json" ]] && { source <(curl -sSL https://raw.githubusercontent.com/vpsnetdk/tg-files/main/sources/exec)
+clear;txt -bar;txt -ne "ingrese su id:" id;txt -ne "ingrese su token:" token;txt -ne "ingrese su username:" admin
+jq --arg a "${token}" --arg b "${id}" --arg c "${admin}" '{token: $a, users: {admin: {id: $b, username: $c }}}' -n > ${file[confJSON]};txt -bar;txt -v "	[✓] datos guardados correctamente [✓]"
+}
 			[[ ! -e ${file[@]} ]] && {
 				for arqx in $(echo "User-ID confJSON tmpJSON kid") ; do
 					touch ${file[$arqx]} &> /dev/null
 				done
-
 				for arqxbt in $(echo "ShellBot confbot botScript") ; do
 					wget -O ${file[$arqxbt]} $url/${arqxbt}.sh &> /dev/null  #https://raw.githubusercontent.com/vpsnetdk/tg-files/main/sources/$arqx &> /dev/null
 					chmod +x ${file[$arqxbt]}
 				done
-			bash $(pwd)/$0
 			}
 LINE="━━━━━━━━━━━━━━━"
 
@@ -24,13 +26,7 @@ source ${dir[main]}/botScript.sh
 admin_id="$(jq -r .users.admin.id < ${file[confJSON]})"
 
 #ID de usuarios
-[[ -e ${file[uid]} ]] && {
-	user_id="$(cat ${file[uid]})"
-} || {
-	user_id=""
-}
-
-# Token del bot
+[[ -e ${file[uid]} ]] && { user_id="$(cat ${file[uid]})" ; } || { user_id="" ; }
 bot_token="$(jq -r .token < ${file[confJSON]})"
 
 clear
