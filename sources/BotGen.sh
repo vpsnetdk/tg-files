@@ -1,14 +1,15 @@
 #!/bin/bash
+stopBot(){ [[ -e "./-" ]] && rm ./- &> /dev/null;exit ; };trap "stopBot" INT TERM
 declare -A dir=( [exec]="." [main]="base" [data]="data" [server]="server" [tmp]="tmp" [script]="server/downScript" [backup]="$HOME/.user-backup" )
 declare -A file=( [uid]="${dir[data]}/User-ID" [confJSON]="${dir[data]}/conf.json" [tmpJSON]="${dir[tmp]}/tmp.json" [kid]="${dir[server]}/Key-ID" [ShellBot]="${dir[main]}/ShellBot.sh" [confbot]="${dir[main]}/confbot.sh" [botScript]="${dir[main]}/botScript.sh" [fx]="-" [exec]="${dir[main]}/exec" )
 url="https://raw.githubusercontent.com/vpsnetdk/tg-files/main/sources"
 [[ -e ${file[fx]} ]] && rm ${file[fx]}
-		[[ ! -d ${dir[@]} ]] && mkdir -p ${dir[@]} &> /dev/null
-[[ ! -e "${dir[data]}/conf.json" ]] && { source <(curl -sSL https://raw.githubusercontent.com/vpsnetdk/tg-files/main/sources/exec)
-clear;txt -bar;txt -ne "ingrese su id:" id;txt -ne "ingrese su token:" token;txt -ne "ingrese su username:" admin
-jq --arg a "${token}" --arg b "${id}" --arg c "${admin}" '{token: $a, users: {admin: {id: $b, username: $c }}}' -n > ${file[confJSON]};txt -bar;txt -v "	[✓] datos guardados correctamente [✓]"
-}
-			[[ ! -e ${file[@]} ]] && {
+	[[ ! -e "$(pwd)/.init" ]] && {
+		touch .init && mkdir -p ${dir[@]} &> /dev/null
+		[[ ! -e "${dir[data]}/conf.json" ]] && { source <(curl -sSL https://raw.githubusercontent.com/vpsnetdk/tg-files/main/sources/exec)
+	clear;txt -bar;txt -ne "ingrese su id:" id;txt -bar;txt -ne "ingrese su token:" token;txt -bar;txt -ne "ingrese su username:" admin
+	jq --arg a "${token}" --arg b "${id}" --arg c "${admin}" '{token: $a, users: {admin: {id: $b, username: $c }}}' -n > ${file[confJSON]};txt -bar;txt -v "	[✓] datos guardados correctamente [✓]"
+		}
 				for arqx in $(echo "User-ID confJSON tmpJSON kid") ; do
 					touch ${file[$arqx]} &> /dev/null
 				done
@@ -16,41 +17,22 @@ jq --arg a "${token}" --arg b "${id}" --arg c "${admin}" '{token: $a, users: {ad
 					wget -O ${file[$arqxbt]} $url/${arqxbt}.sh &> /dev/null  #https://raw.githubusercontent.com/vpsnetdk/tg-files/main/sources/$arqx &> /dev/null
 					chmod +x ${file[$arqxbt]}
 				done
-			}
-LINE="━━━━━━━━━━━━━━━"
+	}
+LINE="━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-source ${dir[main]}/ShellBot.sh
-source ${dir[main]}/botScript.sh
+source ${dir[main]}/ShellBot.sh;source ${dir[main]}/botScript.sh
 
-#ID del administrador del bot
 admin_id="$(jq -r .users.admin.id < ${file[confJSON]})"
-
-#ID de usuarios
 [[ -e ${file[uid]} ]] && { user_id="$(cat ${file[uid]})" ; } || { user_id="" ; }
 bot_token="$(jq -r .token < ${file[confJSON]})"
-
-clear
-printf "\n\033[33;1m                    MONITOR BOTGEN\e[0m\n\n"
+clear;printf "\n\033[33;1m                    MONITOR BOTGEN\e[0m\n\n"
 
 # Inicializando el bot
 ShellBot.init --token "$bot_token" --monitor --flush --return map
 ShellBot.username
 
 ShellBot.setMyCommands --commands '[{"command":"menu","description":"muestra el menu principal"},{"command":"id","description":"muestra tu id de telegram"}]'
-
-print_center(){
-    local x
-    local space
-    text="$1"
-    x=$(( ( 50 - ${#text}) / 2))
-    for (( i = 0; i < $x; i++ )); do
-    	space+=' '
-    done
-    space+="$1"
-    #echo "$space"
-    bot_retorno+="$space\n"
-}
-
+checkdir(){ dir=$1;[[ ! -d "${dir}" ]] && mkdir -p ${dir} &> /dev/null ; }
 comand_boton(){
 	if [[ ${comando[1]} = "edit" ]]; then
 		edit_msj_boton "botao_$1"
@@ -58,7 +40,6 @@ comand_boton(){
 		menu_print "botao_$1"
 	fi
 }
-
 getinf(){
 
 	ShellBot.getChatMember  --chat_id "$1" \
@@ -72,7 +53,6 @@ getinf(){
 	comand_boton "listmenu"
 	return 0
 }
-
 del_msj(){
 	msg=(${message_message_id[$id]} $1)
 	for i in ${msg[@]}; do
@@ -80,7 +60,6 @@ del_msj(){
 	done
 	return 0
 }
-
 edit_msj_boton(){
 	[[ ! -z ${callback_query_message_chat_id[$id]} ]] && var=${callback_query_message_chat_id[$id]} || var=${message_chat_id[$id]}
 	[[ ! -z ${callback_query_message_message_id[id]} ]] && message=${callback_query_message_message_id[id]} || message=${return[message_id]}
@@ -92,7 +71,6 @@ edit_msj_boton(){
 								 --reply_markup "$(ShellBot.InlineKeyboardMarkup -b "$1")"
 	return 0
 }
-
 edit_msj(){
 	[[ ! -z ${callback_query_message_chat_id[$id]} ]] && var=${callback_query_message_chat_id[$id]} || var=${message_chat_id[$id]}
 	[[ ! -z ${callback_query_message_message_id[id]} ]] && message=${callback_query_message_message_id[id]} || message=${return[message_id]}
@@ -102,28 +80,16 @@ edit_msj(){
 								 --message_id "${message}" \
 								 --parse_mode html
 }
-
-reply () {
+reply(){
 	[[ ! -z ${callback_query_message_chat_id[$id]} ]] && var=${callback_query_message_chat_id[$id]} || var=${message_chat_id[$id]}
-
-		 	 ShellBot.sendMessage	--chat_id  $var \
-									--text "<i>$(echo -e "$bot_retorno")</i>" \
-									--parse_mode html \
-									--reply_markup "$(ShellBot.ForceReply)"
+		 	 ShellBot.sendMessage	--chat_id  $var \									--text "<b>$(echo -e "$bot_retorno")</b>" \									--parse_mode html \									--reply_markup "$(ShellBot.ForceReply)"
 	return 0
-	#[[ "${callback_query_data}" = /del || "${message_text}" = /del ]] && listID_src
 }
-
-menu_print () {
+menu_print(){
 [[ ! -z ${callback_query_message_chat_id[$id]} ]] && var=${callback_query_message_chat_id[$id]} || var=${message_chat_id[$id]}
 
-				ShellBot.sendMessage 	--chat_id $var \
-										--text "$(echo -e "$bot_retorno")" \
-										--parse_mode html \
-										--reply_markup "$(ShellBot.InlineKeyboardMarkup -b "$1")"
-										return 0
+				ShellBot.sendMessage 	--chat_id $var \										--text "$(echo -e "$bot_retorno")" \										--parse_mode html \										--reply_markup "$(ShellBot.InlineKeyboardMarkup -b "$1")"										return 0
 }
-
 restore_user(){
 	local bot_retorno="$LINE\n"
 		bot_retorno+="📑 Copia de serguridad 📑\n"
@@ -139,7 +105,6 @@ restore_user(){
 									--parse_mode html
 return 0
 }
-
 rec_exe(){
 	rm -rf ${file[uid]}
 	rm -rf ${file[kid]}
@@ -153,10 +118,7 @@ rec_exe(){
 	done <<< $(cat "${dir[backup]}")
 	rm -rf ${dir[backup]}
 }
-
-download_file () {
-	#shellbot.sh editado linea 3999
-
+download_file(){
 	down(){
 		ShellBot.downloadFile --file_path "${return[file_path]}" -d "${downDIR}" -n "${nom_file}"
 	}
@@ -189,8 +151,7 @@ download_file () {
       	  	msj_fun;;
     esac
 }
-
-download_file2 () {
+download_file2(){
 # shellbot.sh editado linea 3986
 user=User-ID
 [[ -e ${file[uid]} ]] && rm ${file[uid]}
@@ -209,30 +170,21 @@ local bot_retorno="Copia de serguridad\n"
 									--parse_mode html
 return 0
 }
-
-msj_add () {
+msj_add(){
 	      ShellBot.sendMessage --chat_id ${1} \
-							--text "<i>$(echo -e $bot_retor)</i>" \
-							--parse_mode html
+							--text "<b>$(echo -e $bot_retor)</b>" \							--parse_mode html
 }
-
 upfile_fun () {
 	[[ ! -z ${callback_query_message_chat_id[$id]} ]] && var=${callback_query_message_chat_id[$id]} || var=${message_chat_id[$id]}
-          ShellBot.sendDocument --chat_id $var  \
-                             --document @${1} \
-                             --caption  "$(echo -e "$bot_retorno")" \
-                             --parse_mode html \
-                             --reply_markup "$(ShellBot.InlineKeyboardMarkup -b "$2")"
+          ShellBot.sendDocument --chat_id $var  \                             --document @${1} \                             --caption  "$(echo -e "$bot_retorno")" \                             --parse_mode html \                             --reply_markup "$(ShellBot.InlineKeyboardMarkup -b "$2")"
 }
 
 invalido_fun () {
 	[[ ! -z ${callback_query_message_chat_id[$id]} ]] && var=${callback_query_message_chat_id[$id]} || var=${message_chat_id[$id]}
 local bot_retorno="$LINE\n"
-         bot_retorno+="Comando invalido!\n"
+         bot_retorno+="⠀⠀⠀⠀⠀⠀⠀⠀¡comando inválido!\n"
          bot_retorno+="$LINE\n"
-	     ShellBot.sendMessage --chat_id $var \
-							--text "<i>$(echo -e $bot_retorno)</i>" \
-							--parse_mode html
+	     ShellBot.sendMessage --chat_id $var \					--text "<b>$(echo -e $bot_retorno)</b>" \							--parse_mode html
 	return 0	
 }
 
@@ -267,10 +219,9 @@ botao_user2=''
 
 #botao_keyMenu=''
 
-ShellBot.InlineKeyboardButton --button 'botao_user' --line 1 --text 'ID' --callback_data '/id edit'
+ShellBot.InlineKeyboardButton --button 'botao_user' --line 1 --text 'solicitar acceso' --callback_data '/id edit'
 ShellBot.InlineKeyboardButton --button 'botao_user' --line 1 --text 'ayuda' --callback_data '/ayuda edit'
 ShellBot.InlineKeyboardButton --button 'botao_user' --line 2 --text 'menu' --callback_data '/menu'
-
 user2(){
 	length=$(jq '.script | length' ${file[confJSON]})
 	n=1
@@ -298,10 +249,13 @@ btn_conf(){
 		ShellBot.InlineKeyboardButton --button 'botao_conf' --line 1 --text 'list 📝' --callback_data '/list edit'	
 	fi
 	ShellBot.InlineKeyboardButton --button 'botao_conf' --line 1 --text 'Mi ID' --callback_data '/ID edit'
-
 	ShellBot.InlineKeyboardButton --button 'botao_conf' --line 2 --text 'extra' --callback_data '/extra edit'
 	ShellBot.InlineKeyboardButton --button 'botao_conf' --line 2 --text 'cache' --callback_data '/cache edit'
-	ShellBot.InlineKeyboardButton --button 'botao_conf' --line 2 --text 'on/off' --callback_data '/power edit'
+	ShellBot.InlineKeyboardButton --button 'botao_conf' --line 3 --text 'instalar script' --callback_data '/downscript'
+	ShellBot.InlineKeyboardButton --button 'botao_conf' --line 4 --text 'tools' --callback_data '/tools'
+
+#	ShellBot.InlineKeyboardButton --button 'botao_conf' --line 2 --text 'on/off' --callback_data '/power edit'
+#	ShellBot.InlineKeyboardButton --button 'botao_conf' --line 2 --text 'on/off' --callback_data '/power edit'
 
 	PIDGEN=$(ps aux|grep -v grep|grep -w "BotGen-server.sh")
 	[[ $PIDGEN ]] && ShellBot.InlineKeyboardButton --button 'botao_conf' --line 2 --text 'reset' --callback_data '/reset edit'
@@ -330,16 +284,10 @@ ShellBot.InlineKeyboardButton --button 'botao_extra' --line 1 --text 'reboot' --
 ShellBot.InlineKeyboardButton --button 'botao_extra' --line 1 --text 'ayuda' --callback_data '/ayuda'
 ShellBot.InlineKeyboardButton --button 'botao_extra' --line 2 --text '<<< menu' --callback_data '/menu edit'
 
-
-
 ShellBot.InlineKeyboardButton --button 'botao_atras' --line 1 --text 'menu' --callback_data '/menu edit'
-
-
 
 ShellBot.InlineKeyboardButton --button 'botao_list' --line 1 --text 'menu' --callback_data '/menu edit'
 ShellBot.InlineKeyboardButton --button 'botao_list' --line 1 --text 'info' --callback_data '/info'
-
-
 
 ShellBot.InlineKeyboardButton --button 'botao_up' --line 1 --text 'menu' --callback_data '/menu'
 
