@@ -203,7 +203,7 @@ reboot_src(){
 #	GENERADOR DE KEYS
 gerar_key () {
 	data="${comando[1]}"
-	scripts=$(jq .script[$data] < ${confJSON})
+	scripts=$(jq .script[$data] < ${file[confJSON]})
 
 	if [[ $(echo "$scripts"|jq -r .status) = "OFF" ]]; then
 		bot_retorno="$LINE\n"
@@ -213,10 +213,10 @@ gerar_key () {
 		return 0
 	fi
 
-	DIR="/etc/http-shell"
-	LIST="lista-arq"
+	DIR=${dir[script]}
+	LIST="$(echo "drowk-"|rev)"
 
-	P=$(jq -r '.port.nc' < ${confJSON})
+	P=$(jq -r '.port.nc' < ${file[confJSON]})
 	if [[ "$P" != @("null"|"") ]]; then
 		local PORT="$P"
 	else
@@ -228,7 +228,7 @@ gerar_key () {
 	files=$(echo "$scripts"|jq -r .files)
 	link=$(echo "$scripts"|jq -r .link|sed 's/;/ \&\&/g')
 
-	time=$(jq -r '.time' < ${confJSON})
+	time=$(jq -r '.time' < ${file[confJSON]})
 
 	if [[ $time = 'null' ]]; then
 		time=4
@@ -259,7 +259,7 @@ gerar_key () {
 	upfile_fun "${keytxt}/${name}_${chatuser}.txt" "botao_key"
 	rm ${keytxt}/${name}_${chatuser}.txt
 
-	if [[ ${chatuser} -ne $(jq -r '.users.admin.id' < ${confJSON}) ]]; then
+	if [[ ${chatuser} -ne $(jq -r '.users.admin.id' < ${file[confJSON]}) ]]; then
 		kn=$(cat ${NID}|grep "${chatuser}")
 		kn2=$(echo "$kn"|awk -F ' ' '{print $2}')
 		kn3=$(echo "$kn"|awk -F ' ' '{print $3}')
@@ -269,7 +269,7 @@ gerar_key () {
 }
 
 fun_list () {
-	rm ${scriptDIR}/$2/*.x.c &> /dev/null
+	rm ${dir[script]}/$2/*.x.c &> /dev/null
 	unset KEY
 	KEY="$1"
 	#CRIA DIR
@@ -282,7 +282,7 @@ fun_list () {
 	arqslist="$3"
 	for arqx in `echo "${arqslist}"`; do
 		[[ -e ${DIR}/${KEY}/$arqx ]] && continue #ANULA ARQUIVO CASO EXISTA
-		cp ${scriptDIR}/$2/$arqx ${DIR}/${KEY}/
+		cp ${dir[script]}/$2/$arqx ${DIR}/${KEY}/
 		echo "$arqx" >> ${DIR}/${KEY}/${LIST}
 	done
 	echo "$nombrevalue" > ${DIR}/${KEY}.name
@@ -423,22 +423,22 @@ inst_script(){
 	Carpeta)sdata[1]=${message_text} && local bot_retorno="Link";;
 	   Link)sdata[2]=${message_text}
 
-	   		if [[ "$(jq -r '.default' < ${confJSON})" = 'null' ]]; then
-	   			jq '. += {"default":"0"}' < ${confJSON} > ${tmpJSON}
-	   			mv -f ${tmpJSON} ${confJSON}
+	   		if [[ "$(jq -r '.default' < ${file[confJSON]})" = 'null' ]]; then
+	   			jq '. += {"default":"0"}' < ${file[confJSON]} > ${file[tmpJSON]}
+	   			mv -f ${file[tmpJSON]} ${file[confJSON]}
 	   		fi
 
-	   		[[ ! ${scriptDIR}/${sdata[1]} ]] && mkdir ${scriptDIR}/${sdata[1]}
-	   		unzip ${scriptDIR}/tmp/script.zip -d ${scriptDIR}/${sdata[1]} &>/dev/null
-	   		rm -rf ${scriptDIR}/tmp
-	   		sdata[3]=$(ls ${scriptDIR}/${sdata[1]})
-	   		length=$(jq '.script | length' ${confJSON})
-	   		jq --argjson a "$length" --arg b "${sdata[0]}" --arg c "${sdata[1]}" --arg d "${sdata[3]}" --arg e "${sdata[2]}" '.script[$a] += {"name":$b,"dir":$c,"files":$d,"link":$e,"status":"OFF","dev":"false"}' < ${confJSON} > ${tmpJSON}
+	   		[[ ! ${dir[script]}/${sdata[1]} ]] && mkdir ${dir[script]}/${sdata[1]}
+	   		unzip ${dir[script]}/tmp/script.zip -d ${dir[script]}/${sdata[1]} &>/dev/null
+	   		rm -rf ${dir[script]}/tmp
+	   		sdata[3]=$(ls ${dir[script]}/${sdata[1]})
+	   		length=$(jq '.script | length' ${file[confJSON]})
+	   		jq --argjson a "$length" --arg b "${sdata[0]}" --arg c "${sdata[1]}" --arg d "${sdata[3]}" --arg e "${sdata[2]}" '.script[$a] += {"name":$b,"dir":$c,"files":$d,"link":$e,"status":"OFF","dev":"false"}' < ${file[confJSON]} > ${file[tmpJSON]}
 
-	   		if [[ ! -z "$(cat ${tmpJSON})" ]]; then
-	   			mv -f ${tmpJSON} ${confJSON}
+	   		if [[ ! -z "$(cat ${file[tmpJSON]})" ]]; then
+	   			mv -f ${file[tmpJSON]} ${file[confJSON]}
 
-	   			new=$(jq .script[${length}] < ${confJSON})
+	   			new=$(jq .script[${length}] < ${file[confJSON]})
 	   			name=$(echo $new|jq -r '.name')
 	   			dir=$(echo $new|jq -r '.dir')
 	   			link=$(echo $new|jq -r '.link'|sed 's/&&/;/g'|sed 's/ ;/;/g')
@@ -453,7 +453,7 @@ inst_script(){
 
 	   			comand_boton "atras"	
 	   		else
-	   			rm -rf ${tmpJSON}
+	   			rm -rf ${file[tmpJSON]}
 	   			local bot_retorno="$LINE\n"
 	   			bot_retorno+="❌ SCRIPT NO INSTALADO ❌\n"
 	   			bot_retorno+="$LINE"
@@ -468,13 +468,13 @@ inst_script(){
 
 #======= LINK DE INSTALACION ==========
 link_src(){
-	def="$(jq -r '.default' < ${confJSON})"
-	inst=$(jq .script[${def}] < ${confJSON})
+	def="$(jq -r '.default' < ${file[confJSON]})"
+	inst=$(jq .script[${def}] < ${file[confJSON]})
 
 	if [[ $def = "" ]]; then
 		link="NO HAY LINK INSTALADO!"
 	else
-		inst=$(jq .script[${def}] < ${confJSON})
+		inst=$(jq .script[${def}] < ${file[confJSON]})
 		name=$(echo "$inst"|jq -r '.name')
 		link=$(echo "$inst"|jq -r '.link'|sed 's/&&/;/g'|sed 's/ ;/;/g')
 		echo "$name"
@@ -493,7 +493,7 @@ link_src(){
 #=======================================
 
 key_menu(){
-	if [[ $(jq -r '.default' < ${confJSON}) = "" ]]; then
+	if [[ $(jq -r '.default' < ${file[confJSON]}) = "" ]]; then
 		menu_src	
 		return 0
 	fi
@@ -511,8 +511,8 @@ key_menu(){
 conf(){
 	var=${comando[1]}
 	[[ -z ${var} ]] && return
-	if jq --arg a "$var" '. += {"default":$a}' < ${confJSON} > ${tmpJSON} ;then
-		mv -f ${tmpJSON} ${confJSON}
+	if jq --arg a "$var" '. += {"default":$a}' < ${file[confJSON]} > ${file[tmpJSON]} ;then
+		mv -f ${file[tmpJSON]} ${file[confJSON]}
 	fi
 	comando[1]='edit'
 	key_menu
@@ -521,13 +521,13 @@ conf(){
 idden(){
 	var=${comando[1]}
 	var2=${comando[2]}
-	length=$(($(jq '.script | length' ${confJSON}) - 1))
+	length=$(($(jq '.script | length' ${file[confJSON]}) - 1))
 	bot_retorno="$LINE\n"
 	bot_retorno+="Script $var2 para los users\n"
 	bot_retorno+="$LINE"
 
-	if jq --argjson a "$var" --arg b "$var2" '.script[$a] += {"status":$b}' < ${confJSON} > ${tmpJSON} ;then
-		mv -f ${tmpJSON} ${confJSON}
+	if jq --argjson a "$var" --arg b "$var2" '.script[$a] += {"status":$b}' < ${file[confJSON]} > ${file[tmpJSON]} ;then
+		mv -f ${file[tmpJSON]} ${file[confJSON]}
 	fi
 
 	comando[1]='edit'
@@ -545,26 +545,26 @@ idden(){
 
 quitar(){
 
-	length=$(($(jq '.script | length' ${confJSON}) - 1))
-	def=$(jq -r .default < ${confJSON})
-	name_del=$(jq -r .script[${comando[1]}].name < ${confJSON})
-	dir_del=$(jq -r .script[${comando[1]}].dir < ${confJSON})
+	length=$(($(jq '.script | length' ${file[confJSON]}) - 1))
+	def=$(jq -r .default < ${file[confJSON]})
+	name_del=$(jq -r .script[${comando[1]}].name < ${file[confJSON]})
+	dir_del=$(jq -r .script[${comando[1]}].dir < ${file[confJSON]})
 
 	if [[ $length -eq 0 ]]; then
-		jq 'del(.default)' < ${confJSON} > ${tmpJSON}
-		mv -f ${tmpJSON} ${confJSON}
+		jq 'del(.default)' < ${file[confJSON]} > ${file[tmpJSON]}
+		mv -f ${file[tmpJSON]} ${file[confJSON]}
 	elif [[ ${comando[1]} -eq $def ]];then
-		jq '. += {"default":"0"}' < ${confJSON} > ${tmpJSON}
-		mv -f ${tmpJSON} ${confJSON}
+		jq '. += {"default":"0"}' < ${file[confJSON]} > ${file[tmpJSON]}
+		mv -f ${file[tmpJSON]} ${file[confJSON]}
 	elif [[ ${comando[1]} -lt $def ]]; then
 		var=$(( $def - 1))
-		jq --arg a "$var" '. += {"default":$a}' < ${confJSON} > ${tmpJSON}
-		mv -f ${tmpJSON} ${confJSON}
+		jq --arg a "$var" '. += {"default":$a}' < ${file[confJSON]} > ${file[tmpJSON]}
+		mv -f ${file[tmpJSON]} ${file[confJSON]}
 	fi
 
-	if jq --argjson a "${comando[1]}" 'del(.script[$a])' < ${confJSON} > ${tmpJSON} ; then
-		mv -f ${tmpJSON} ${confJSON}
-		rm -rf ${scriptDIR}/${dir_del}
+	if jq --argjson a "${comando[1]}" 'del(.script[$a])' < ${file[confJSON]} > ${file[tmpJSON]} ; then
+		mv -f ${file[tmpJSON]} ${file[confJSON]}
+		rm -rf ${dir[script]}/${dir_del}
 	fi
 
 	local bot_retorno="$LINE\n"
@@ -669,7 +669,7 @@ listID_src(){
 
 myid_src(){
 
-  var=$(jq -r '.users.admin.username' < ${confJSON})
+  var=$(jq -r '.users.admin.username' < ${file[confJSON]})
 
   bot_retorno="$LINE\n"
   bot_retorno+="     🔰 Bot generador de key 🔰\n"
@@ -794,7 +794,7 @@ send_admin(){
 	comand_boton "atras"
 
 	saveID "${callback_query_from_id}"
-	var=$(jq -r '.users.admin.id' < ${confJSON})
+	var=$(jq -r '.users.admin.id' < ${file[confJSON]})
 	ShellBot.sendMessage 	--chat_id $var \
 							--text "$(echo -e "$bot_retorno2")" \
 							--parse_mode html \
@@ -898,7 +898,7 @@ comand(){
 			elif [[ ${message_document_file_id[$id]} ]]; then
 					 download_file
 	    	elif [[ ${message_text[$id]} || ${callback_query_data[$id]} ]]; then
-	    		length=$(jq '.script | length' ${confJSON})
+	    		length=$(jq '.script | length' ${file[confJSON]})
 
 	    		# comandos solo botones
 	    		if [[ ${callback_query_data[$id]} ]]; then

@@ -1,43 +1,36 @@
 #!/bin/bash
-# -*- ENCODING: UTF-8 -*-
+declare -A dir=( [exec]="." [main]="base" [data]="data" [server]="server" [tmp]="tmp" [script]="server/downScript" [backup]="$HOME/.user-backup" )
+declare -A file=( [uid]="${dir[data]}/User-ID" [confJSON]="${dir[data]}/conf.json" [tmpJSON]="${dir[tmp]}/tmp.json" [kid]="${dir[server]}/Key-ID" [ShellBot]="${dir[main]}/ShellBot.sh" [confbot]="${dir[main]}/confbot.sh" [botScript]="${dir[main]}/botScript.sh" )
+		[[ ! -d ${dir[@]} ]] && mkdir -p ${dir[@]} &> /dev/null
+[[ ! -e "${dir[data]}/conf.json" ]] && { read -p "id: " id;read -p "token: " token;read -p "user: " admin;jq --arg a "${token}" --arg b "${id}" --arg c "${admin}" '{token: $a, users: {admin: {id: $b, username: $c }}}' -n > ${dir[data]}/conf.json ; }
+			[[ ! -e ${file[@]} ]] && {
+				for arqx in $(echo "User-ID confJSON tmpJSON kid") ; do
+					touch ${file[$arqx]} &> /dev/null
+				done
+			} || {
 
-stopBot(){
-	printf "\n\n\033[33;1m              SALIENDO DEL MODO MONITOR\n\n"
-	sleep 3
-	exit
-}
-
-trap "stopBot" INT TERM
-  
-CIDdir=/etc/ADM-db && [[ ! -d ${CIDdir} ]] && mkdir ${CIDdir}
-CID="${CIDdir}/User-ID"
-NID="${CIDdir}/Key-ID"
-backup="$HOME/user-backup"
-keytxt="${CIDdir}/keys" && [[ ! -d ${keytxt} ]] && mkdir ${keytxt}
-scriptDIR="${CIDdir}/script"
-[[ -e /etc/texto-bot ]] && rm /etc/texto-bot
-conf_json=${CIDdir}/conf.json
-tmp_json=${CIDdir}/tmp.json
-confJSON=${CIDdir}/conf.json
-tmpJSON=${CIDdir}/tmp.json
+				for arqx in $(echo "ShellBot confbot botScript") ; do
+					wget -O ${file[$arqx]} https://raw.githubusercontent.com/vpsnetdk/tg-files/main/sources/$arqx &> /dev/null
+					chmod +x ${file[$arqx]}
+				done
+			}
 LINE="━━━━━━━━━━━━━━━"
 
-# Importando API
-source ${CIDdir}/ShellBot.sh
-source ${CIDdir}/botScript.sh
+source ${dir[exec]}/ShellBot.sh
+source ${dir[exec]}/botScript.sh
 
 #ID del administrador del bot
-admin_id="$(jq -r .users.admin.id < ${confJSON})"
+admin_id="$(jq -r .users.admin.id < ${file[confJSON]})"
 
 #ID de usuarios
-[[ -e ${CID} ]] && {
-	user_id="$(cat ${CID})"
+[[ -e ${file[uid]} ]] && {
+	user_id="$(cat ${file[uid]})"
 } || {
 	user_id=""
 }
 
 # Token del bot
-bot_token="$(jq -r .token < ${confJSON})"
+bot_token="$(jq -r .token < ${file[confJSON]})"
 
 clear
 printf "\n\033[33;1m                    MONITOR BOTGEN\e[0m\n\n"
@@ -140,8 +133,8 @@ restore_user(){
     	bot_retorno+="$LINE\n"
 		bot_retorno+="✅ Se restauro con exito! ✅\n"
 		bot_retorno+="$LINE\n"
-		bot_retorno+="📂 ${CID} 📂\n"
-		bot_retorno+="📂 ${NID} 📂\n"
+		bot_retorno+="📂 ${file[uid]} 📂\n"
+		bot_retorno+="📂 ${file[kid]} 📂\n"
 		bot_retorno+="$LINE"
 		del_msj
 			ShellBot.sendMessage	--chat_id "${message_chat_id[$id]}" \
@@ -151,17 +144,17 @@ return 0
 }
 
 rec_exe(){
-	rm -rf ${CID}
-	rm -rf ${NID}
+	rm -rf ${file[uid]}
+	rm -rf ${file[kid]}
 	while read line; do
 		rec=$(echo "$line"|awk -F ' ' '{print $1}')
 		rec1=$(echo "$line"|awk -F ' ' '{print $2}')
 		rec2=$(echo "$line"|awk -F ' ' '{print $3}')
 		rec3=$(echo "$line"|awk -F ' ' '{print $4}')
-		echo "$rec $rec1" >> ${CID}
-		echo "$rec $rec2 $rec3" >> ${NID}
-	done <<< $(cat "${backup}")
-	rm -rf ${backup}
+		echo "$rec $rec1" >> ${file[uid]}
+		echo "$rec $rec2 $rec3" >> ${file[kid]}
+	done <<< $(cat "${dir[backup]}")
+	rm -rf ${dir[backup]}
 }
 
 download_file () {
@@ -179,7 +172,7 @@ download_file () {
     [[ -z ${file_type} ]] && file_type="${message_document_file_name}"
 
     case ${file_type} in
-    	zip|[*].zip)downDIR="${scriptDIR}/tmp" && [[ ! -d ${downDIR} ]] && mkdir ${downDIR}
+    	zip|[*].zip)downDIR="${dir[script]}/tmp" && [[ ! -d ${downDIR} ]] && mkdir ${downDIR}
     		nom_file="script.zip"
     		down
     		inst_script "ini"
@@ -203,10 +196,10 @@ download_file () {
 download_file2 () {
 # shellbot.sh editado linea 3986
 user=User-ID
-[[ -e ${CID} ]] && rm ${CID}
+[[ -e ${file[uid]} ]] && rm ${file[uid]}
 local file_id
           ShellBot.getFile --file_id ${message_document_file_id[$id]}
-          ShellBot.downloadFile --file_path "${return[file_path]}" --dir "${CIDdir}"
+          ShellBot.downloadFile --file_path "${return[file_path]}" --dir "${dir[exec]}"
 local bot_retorno="Copia de serguridad\n"
 		bot_retorno+="$LINE\n"
 		bot_retorno+="Se restauro con exito!!\n"
@@ -282,11 +275,11 @@ ShellBot.InlineKeyboardButton --button 'botao_user' --line 1 --text 'ayuda' --ca
 ShellBot.InlineKeyboardButton --button 'botao_user' --line 2 --text 'menu' --callback_data '/menu'
 
 user2(){
-	length=$(jq '.script | length' ${confJSON})
+	length=$(jq '.script | length' ${file[confJSON]})
 	n=1
 	for (( i = 0; i < $length; i++ )); do
-		if [[ $(jq -r .script[$i].status < ${confJSON}) = "ON" ]]; then
-			name=$(jq -r .script[$i].name < ${confJSON})
+		if [[ $(jq -r .script[$i].status < ${file[confJSON]}) = "ON" ]]; then
+			name=$(jq -r .script[$i].name < ${file[confJSON]})
 			ShellBot.InlineKeyboardButton --button 'botao_user2' --line $n --text "🔑 $name key 🔑" --callback_data "/keygen $i"
 			let n++
 		fi
@@ -302,7 +295,7 @@ btn_conf(){
 	botao_conf=''
 
 	ShellBot.InlineKeyboardButton --button 'botao_conf' --line 1 --text 'Nuevo ID' --callback_data "/add"
-	#if [[ $(cat ${CID}) ]]; then
+	#if [[ $(cat ${file[uid]}) ]]; then
 	if [[ $(echo ${user_id}) ]]; then
 		ShellBot.InlineKeyboardButton --button 'botao_conf' --line 1 --text 'del 🗑' --callback_data '/del'
 		ShellBot.InlineKeyboardButton --button 'botao_conf' --line 1 --text 'list 📝' --callback_data '/list edit'	
@@ -316,14 +309,14 @@ btn_conf(){
 	PIDGEN=$(ps aux|grep -v grep|grep -w "BotGen-server.sh")
 	[[ $PIDGEN ]] && ShellBot.InlineKeyboardButton --button 'botao_conf' --line 2 --text 'reset' --callback_data '/reset edit'
 
-	length=$(jq '.script | length' ${CIDdir}/conf.json)
-	script_def=$(jq -r '.default' < ${confJSON})
+	length=$(jq '.script | length' ${dir[exec]}/conf.json)
+	script_def=$(jq -r '.default' < ${file[confJSON]})
 	if [[ "$length" -ge "2" ]]; then
 		ShellBot.InlineKeyboardButton --button 'botao_conf' --line 3 --text 'menu conf Key' --callback_data '/menukey edit'
 		ShellBot.InlineKeyboardButton --button 'botao_conf' --line 3 --text '🔑 keygen 🔑' --callback_data "/keygen ${script_def}"
 	elif [[ "$length" = "1" ]]; then
 		ShellBot.InlineKeyboardButton --button 'botao_conf' --line 3 --text '🔑 keygen 🔑' --callback_data "/keygen ${script_def}"
-		if [[ $(cat ${confJSON}|jq -r .script[0].status) = "ON" ]]; then
+		if [[ $(cat ${file[confJSON]}|jq -r .script[0].status) = "ON" ]]; then
 			idden="Ocul ✅"
 			status="OFF"
 		else
@@ -364,13 +357,13 @@ btn_menukey(){
 btn_keymenu(){
 	unset botao_keyMenu
 	botao_keyMenu=''
-	length=$(jq '.script | length' ${confJSON})
+	length=$(jq '.script | length' ${file[confJSON]})
 	def=$(jq -r '.default' < $conf_json)
 	n=1
 	for (( i = 0; i < ${length}; i++ )); do
-		name=$(cat ${confJSON}|jq -r .script[$i].name)
+		name=$(cat ${file[confJSON]}|jq -r .script[$i].name)
 
-		if [[ $(cat ${confJSON}|jq -r .script[$i].dev) = "false" ]]; then
+		if [[ $(cat ${file[confJSON]}|jq -r .script[$i].dev) = "false" ]]; then
 			ShellBot.InlineKeyboardButton 	--button 'botao_keyMenu' --line $n --text "${name}" --callback_data "/keygen $i"
 			if [[ $def = $i ]]; then
 				_def="Default ✅"
@@ -381,7 +374,7 @@ btn_keymenu(){
 			fi
 			ShellBot.InlineKeyboardButton 	--button 'botao_keyMenu' --line $n --text "${_def}" --callback_data "/default ${_name}"
 
-			if [[ $(cat ${confJSON}|jq -r .script[$i].status) = "ON" ]]; then
+			if [[ $(cat ${file[confJSON]}|jq -r .script[$i].status) = "ON" ]]; then
 				idden="Ocul ✅"
 				status="OFF"
 			else
