@@ -1,13 +1,4 @@
 #!/bin/bash
-# -*- ENCODING: UTF-8 -*-
-
-#	IP DEL SISTEMA
-meu_ip_fun(){
-	MIP=$(ip addr | grep 'inet' | grep -v inet6 | grep -vE '127\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | grep -o -E '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | head -1)
-	MIP2=$(wget -qO- ipv4.icanhazip.com)
-	[[ "$MIP" != "$MIP2" ]] && IP="$MIP2" || IP="$MIP"
-}
-
 meu_ip(){
 	MIP=$(ip addr | grep 'inet' | grep -v inet6 | grep -vE '127\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | grep -o -E '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | head -1)
 	MIP2=$(wget -qO- ipv4.icanhazip.com)
@@ -71,7 +62,7 @@ ayuda_src(){
 	[[ $adm = "null" ]] && adm=Rufu99
 	bot_retorno="$LINE\n"
 	bot_retorno+="     🔰 Bot generador de key 🔰\n"
-	bot_retorno+="             ⚜ by @Rufu99 ⚜\n"
+	bot_retorno+="             ⚜ by @drowkid01 ⚜\n"
 	bot_retorno+="$LINE\n"
 	 if [[ ! "$admin_id" = "${chatuser}" ]]; then
 		 if [[ ! $(echo "$user_id"|grep "${chatuser}") = "" ]]; then
@@ -135,7 +126,7 @@ start_gen () {
 	if [[ ! $PIDGEN ]]; then
 
 echo -e "[Unit]
-Description=BotGen-server Service by @Rufu99
+Description=BotGen-server Service by @drowkid01
 After=network.target
 StartLimitIntervalSec=0
 
@@ -324,7 +315,7 @@ menu_src(){
 		 if [[ $(echo "$user_id"|grep "${chatuser}") = "" ]]; then
 		   	bot_retorno="$LINE\n"
 		 	bot_retorno+="     🔰 Bot generador de key 🔰\n"
-		 	bot_retorno+="             ⚜ by @Rufu99 ⚜\n"
+		 	bot_retorno+="             ⚜ by @drowkid01 ⚜\n"
 		 	bot_retorno+="$LINE\n"
 		 	bot_retorno+="    ⚠️ <u>Aun no tienes acceso</u> ⚠️\n"
 		 	bot_retorno+="$LINE\n"
@@ -344,7 +335,7 @@ menu_src(){
 
 		 	bot_retorno="$LINE\n"
 		 	bot_retorno+="     🔰 Bot generador de key 🔰\n"
-		 	bot_retorno+="             ⚜ by @Rufu99 ⚜\n"
+		 	bot_retorno+="             ⚜ by @drowkid01 ⚜\n"
 		 	bot_retorno+="$LINE\n"
 		 	bot_retorno+="<u>TU ID</u>: <code>${chatuser}</code>\n"
 		 	bot_retorno+="<u>Dias restantes</u>: $EXPTIME\n"
@@ -673,7 +664,7 @@ myid_src(){
 
   bot_retorno="$LINE\n"
   bot_retorno+="     🔰 Bot generador de key 🔰\n"
-  bot_retorno+="             ⚜ by @Rufu99 ⚜\n"
+  bot_retorno+="             ⚜ by @drowkid01 ⚜\n"
   bot_retorno+="$LINE\n"
   bot_retorno+="Recuerda primero debes contactar\n"
   bot_retorno+="a @$var y arreglar el 💸 pago 💸\n"
@@ -725,7 +716,7 @@ addID_reply(){
 
     bot_retor="$LINE\n"
     bot_retor+="     🔰 Bot generador de key 🔰\n"
-    bot_retor+="             ⚜ by @Rufu99 ⚜\n"
+    bot_retor+="             ⚜ by @drowkid01 ⚜\n"
     bot_retor+="$LINE\n"
     bot_retor+="El Administrador te autorizo a\n"
     bot_retor+="usar el bot generador de keys\n"
@@ -787,7 +778,7 @@ send_admin(){
 
 	bot_retorno="$LINE\n"
 	bot_retorno+="     🔰 Bot generador de key 🔰\n"
-	bot_retorno+="             ⚜ by @Rufu99 ⚜\n"
+	bot_retorno+="             ⚜ by @drowkid01 ⚜\n"
 	bot_retorno+="$LINE\n"
 	bot_retorno+="      ✅ ID enviado al admin ✅\n"
 	bot_retorno+="$LINE"
